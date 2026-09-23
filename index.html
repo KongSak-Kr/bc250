@@ -1295,7 +1295,7 @@ cv.addEventListener('dblclick',e=>{const[x,y]=cxy(e);
   for(let i=0;i<pts.length-1;i++){const a=prj(pts[i]),b=prj(pts[i+1]);if(!a||!b)continue;const q=distSeg2(x,y,a[0],a[1],b[0],b[1]);if(q.d<bd){bd=q.d;best={i,t:q.t};}}
   if(!best)return;const a=pts[best.i],b=pts[best.i+1];const np=V3.add(a,V3.mul(V3.sub(b,a),best.t)).map(r1);
   ed.c.wp.splice(best.i,0,np);ed.wp=best.i;onChange(true);});
-window.addEventListener('keydown',e=>{if(!ed.c)return;if(e.target.matches('input,select,textarea,button'))return;
+window.addEventListener('keydown',e=>{if(!ed.c)return;if(e.target&&e.target.matches&&e.target.matches('input,select,textarea,button'))return;
   if((e.key==='Delete'||e.key==='Backspace')&&ed.wp!=null){ed.c.wp.splice(ed.wp,1);ed.wp=null;onChange(true);e.preventDefault();}
   if(e.key==='Escape'){if(ed.wp!=null){ed.wp=null;draw();}else closeCable();}});
 /* 3D 클릭 → 부품 정보 */
@@ -1332,7 +1332,7 @@ function setMax(on,ret){vmax=on;viewerEl.classList.toggle('max',on);document.doc
     if(r.el){const d=r.el.getBoundingClientRect().top-r.top;if(Math.abs(d)>1)window.scrollBy(0,d);}hs.scrollBehavior='';}   // 위쪽 뷰어 높이가 바뀌어도 누른 버튼이 같은 자리에 오게
   else viewerEl.scrollIntoView({block:'nearest'});}}
 if(maxBtn)maxBtn.addEventListener('click',()=>setMax(!vmax));
-window.addEventListener('keydown',e=>{if(e.key==='Escape'&&vmax&&!ed.c&&!e.target.matches('input,select,textarea')){setMax(false);e.preventDefault();}});
+window.addEventListener('keydown',e=>{const t=e.target;if(e.key==='Escape'&&vmax&&!ed.c&&!(t&&t.matches&&t.matches('input,select,textarea'))){setMax(false);e.preventDefault();}});
 
 /* ── 뷰·레이어·표현 패널 ── */
 function setView(v){setFocus(null);$$('#v3d [data-view]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.view===v?'true':'false'));
