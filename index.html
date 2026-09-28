@@ -561,6 +561,21 @@ pre{max-width:100%}
   #v3d .agd-card{grid-template-columns:1fr}#v3d .agc-no{grid-row:auto;font-size:13px}#v3d .agc-warn,#v3d .agc-f{grid-column:1}#v3d .agc-go{padding-left:16px}}
 #v3d .viewer.max .agd{flex:0 0 auto;max-height:42vh;overflow:auto}
 
+/* 3D를 덜 가리게 — 자세·색·케이스·표시·배선 칩과 투명도·좌표 칸은 접어 두고 '도구 ▾'로 펼침 (첫 줄만 늘 보임) */
+#v3d .viewer:not(.tools) .hud>.vchipset:not(.vrow1),#v3d .viewer:not(.tools) .vsliders,#v3d .viewer:not(.tools) .readout{display:none}
+#v3d .vrow1{flex-wrap:nowrap;align-items:center}
+#v3d .vviews{display:flex;gap:5px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
+#v3d .vviews::-webkit-scrollbar{display:none}
+#v3d .vtools{flex:0 0 auto}
+/* 좌표 칸은 투명도 칸 맨 아래 한 줄로 (뷰어 바닥에 떠 있으면 아래 단계 카드를 가림) */
+#v3d .vsliders .readout{position:static;order:9;margin:2px 0 0;padding:4px 0 0;border:0;border-top:1px solid var(--line2);border-radius:0;background:none;
+  box-shadow:none;font-size:10.5px;line-height:1.45;color:var(--ink3);white-space:normal;width:0;min-width:100%}   /* 칸 너비를 넓히지 않고 줄바꿈 */
+#v3d .vtools[aria-expanded="true"]{background:var(--acc-soft);color:var(--ink)}
+/* 단계 설명 접기 — 접으면 번호·제목·나사 한 줄만. 화면 가득(최대화)인데 높이가 낮으면 저절로 접힘 */
+#v3d .agd-cardt{font-family:"IBM Plex Sans KR",sans-serif;font-size:11.5px;padding:4px 8px;margin-left:2px}
+#v3d .agd[data-card="closed"] :is(.agc-sum,.agc-go,.agc-warn,.agc-f){display:none}
+@media(max-height:720px){#v3d .viewer.max .agd[data-card="auto"] :is(.agc-sum,.agc-go,.agc-warn,.agc-f){display:none}}
+
 /* 3D 파일 내보내기 창 */
 #v3d .xform{margin-top:12px}
 #v3d .xgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 18px;padding:4px 0 6px}
@@ -701,7 +716,8 @@ header.hero .hero-f figcaption{display:none}
     <canvas id="cv" aria-label="BC-250 조립 3D 배치도"></canvas>
     <div class="nojs" id="nojs"><b>3D 뷰어가 시작되지 않았습니다.</b><br>JavaScript가 켜진 브라우저에서 열어 주세요. 아이폰 ‘파일’ 앱 미리보기는 스크립트를 실행하지 않으니 공유 → <b>Safari로 열기</b>를 쓰세요.</div>
     <div class="hud">
-      <div class="vchipset">
+      <div class="vchipset vrow1">
+        <span class="vviews">
         <button class="vchip" type="button" data-view="iso" aria-pressed="true">아이소</button>
         <button class="vchip" type="button" data-view="front" aria-pressed="false">앞</button>
         <button class="vchip" type="button" data-view="rear" aria-pressed="false">뒤</button>
@@ -709,6 +725,8 @@ header.hero .hero-f figcaption{display:none}
         <button class="vchip" type="button" data-view="nside" aria-pressed="false">옆 (반대)</button>
         <button class="vchip" type="button" data-view="top" aria-pressed="false">위 (그릴)</button>
         <button class="vchip" type="button" data-view="bot" aria-pressed="false">바닥</button>
+        </span>
+        <button class="vchip vtools" id="vtools" type="button" aria-expanded="false" title="자세·색·케이스·표시·배선·투명도 설정을 펼치거나 접습니다">도구 ▾</button>
         <button class="vchip vmax" id="vmax" type="button" aria-pressed="false" title="뷰어를 화면 가득 키웁니다 · Esc로 닫기">크게 보기 ⤢</button>
       </div>
       <div class="vchipset">
@@ -734,13 +752,13 @@ header.hero .hero-f figcaption{display:none}
       <label>단면 <input type="range" id="cutq" min="0" max="100" value="100"><span class="mono" id="cutqv">끔</span></label>
       <label class="vs-c"><input type="checkbox" id="cutp"> 부품도 자르기</label>
       <label>부품 <input type="range" id="opq" min="5" max="100" value="100"><span class="mono" id="opqv">100%</span></label>
+      <div class="readout mono" id="ro"></div>
     </div>
     <div class="legend">
       <span><b style="background:var(--pwr)"></b>12V 전력</span>
       <span><b style="background:var(--sig)"></b>신호·제어</span>
       <span><b style="background:var(--usb)"></b>USB</span>
     </div>
-    <div class="readout mono" id="ro"></div>
     <div class="agd" id="agd" hidden>
       <div class="agd-top">
         <div class="agd-ctl">
@@ -748,6 +766,7 @@ header.hero .hero-f figcaption{display:none}
           <button class="tbtn agd-b agd-play" id="agplay" type="button" title="이어서 재생 / 멈춤 (Space)">▶ 재생</button>
           <button class="tbtn agd-b" id="agnext" type="button" title="다음 단계 (→)" aria-label="다음 단계">▶|</button>
           <span class="mono agd-n" id="agn"></span>
+          <button class="tbtn agd-b agd-cardt" id="agcardt" type="button" aria-expanded="true" title="단계 설명(할 일·버튼)을 접거나 펼칩니다">설명 접기 ▴</button>
         </div>
         <div class="agd-tl">
           <input type="range" id="agq" min="0" max="100" step="1" value="100" aria-label="조립 순서 게이지 — 왼쪽 처음, 오른쪽 완성">
@@ -1506,7 +1525,7 @@ let W=0,H=0,DPR=1;
 const B=D.bounds;let T=[(B[0]+B[3])/2,(B[1]+B[4])/2,(B[2]+B[5])/2];   /* T = 카메라 목표점 (viewBox 가운데) */
 /* 보기 설정 (브라우저에 기억) */
 const VS='bc250-view-v3';
-const VW={opR:1,opC:0.6,opv:{},vh:null,ori:'lie',sty:'real',cop:0.3,cut:100,cutP:false};
+const VW={opR:1,opC:0.6,opv:{},vh:null,ori:'lie',sty:'real',cop:0.3,cut:100,cutP:false,tools:false,card:'auto'};
 (function(){try{const v=JSON.parse(localStorage.getItem(VS)||'null');if(v)for(const k in VW)if(k in v)VW[k]=v[k];}catch(e){}})();
 function saveView(){try{localStorage.setItem(VS,JSON.stringify(VW));}catch(e){}}
 const V={case:true,parts:true,wires:true,nums:false,tags:true,lanes:false};
@@ -2059,13 +2078,21 @@ function showInfo(id){if(!vinfo)return;if(!id){vinfo.hidden=true;return;}const i
 
 /* ── 뷰어 크기: 아래 손잡이로 높이 조절 · 크게 보기(화면 가득) ── */
 const viewerEl=$('#v3d .viewer'),grip=$('#vgrip'),maxBtn=$('#vmax');let vmax=false;
+/* 3D를 덜 가리게: '도구 ▾'(자세·색·케이스·표시·배선·투명도·좌표)와 단계 설명은 접을 수 있음 — 상태는 이 브라우저에 기억 */
+const toolsBtn=$('#vtools'),cardBtn=$('#agcardt'),agdEl=$('#agd');
+function syncTools(){viewerEl.classList.toggle('tools',!!VW.tools);if(toolsBtn){toolsBtn.setAttribute('aria-expanded',VW.tools?'true':'false');toolsBtn.textContent=VW.tools?'도구 ▴':'도구 ▾';}}
+function cardCompact(){return VW.card==='closed'||(VW.card==='auto'&&vmax&&matchMedia('(max-height:720px)').matches);}
+function syncCard(){if(agdEl)agdEl.dataset.card=VW.card||'auto';if(cardBtn){const c=cardCompact();cardBtn.textContent=c?'설명 펼치기 ▾':'설명 접기 ▴';cardBtn.setAttribute('aria-expanded',c?'false':'true');}}
+if(toolsBtn)toolsBtn.addEventListener('click',e=>{e.stopPropagation();VW.tools=!VW.tools;saveView();syncTools();});
+if(cardBtn)cardBtn.addEventListener('click',e=>{e.stopPropagation();VW.card=cardCompact()?'open':'closed';saveView();syncCard();});
+window.addEventListener('resize',syncCard);syncTools();syncCard();
 function applyH(h){h=Math.round(Math.max(260,Math.min(h,window.innerHeight*0.92)));cv.style.height=h+'px';return h;}
 if(grip)grip.addEventListener('pointerdown',e=>{if(vmax)return;e.preventDefault();const y0=e.clientY,h0=cv.getBoundingClientRect().height;try{grip.setPointerCapture(e.pointerId);}catch(x){}
   const mv=ev=>{VW.vh=applyH(h0+(ev.clientY-y0));resize();};
   const up=()=>{grip.removeEventListener('pointermove',mv);grip.removeEventListener('pointerup',up);grip.removeEventListener('pointercancel',up);saveView();};
   grip.addEventListener('pointermove',mv);grip.addEventListener('pointerup',up);grip.addEventListener('pointercancel',up);});
 let maxRet=null;   // 매뉴얼 버튼으로 열었을 때: 닫으면 읽던 자리(스크롤 위치)로 돌아감
-function setMax(on,ret){vmax=on;viewerEl.classList.toggle('max',on);document.documentElement.classList.toggle('v3d-max',on);document.documentElement.style.overflow=on?'hidden':'';
+function setMax(on,ret){vmax=on;viewerEl.classList.toggle('max',on);syncCard();document.documentElement.classList.toggle('v3d-max',on);document.documentElement.style.overflow=on?'hidden':'';
   if(on)maxRet=(ret==null?null:ret);
   if(on)cv.style.height='';else if(VW.vh)applyH(VW.vh);
   if(maxBtn){maxBtn.textContent=on?(maxRet!=null?'읽던 곳으로 ✕':'닫기 ✕'):'크게 보기 ⤢';maxBtn.setAttribute('aria-pressed',on?'true':'false');}
